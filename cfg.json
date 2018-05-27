@@ -1,0 +1,7 @@
+{
+    "db": "root:123456@tcp(192.168.12.26:3306)/test?loc=Local&parseTime=true",
+    "adaptername": "brqd63ef4ba-d8",
+    "ipfield": "ip",
+    "idfield": "id",
+    "table": "con"
+}
