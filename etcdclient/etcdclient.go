@@ -2,13 +2,14 @@ package etcdclient
 
 import (
 	"errors"
-	"regexp"
-	"strings"
-	"time"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/etcd/client"
+	"github.com/tidwall/gjson"
 	"golang.org/x/net/context"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type Etcd struct {
@@ -28,11 +29,11 @@ type Ip struct {
 
 var (
 	ServcieTimeout = 50 * time.Second
-	BasePath       = "/registry"
-	PodsPath       = "/pods/default/"
+	BasePath       = "/assigner"
 	AppsPath       = BasePath + "/apps/"
 	IpsPath        = BasePath + "/ips/"
 	IdsPath        = BasePath + "/ids/"
+	QueryCoresPath = "/registry/pods/default/"
 	ConfigPath     = BasePath + "/config"
 )
 
@@ -160,7 +161,19 @@ func (e *Etcd) QueryContainerid(containerid string) (string, error) {
 				return paths[len(paths)-1], nil
 			}
 		}
-		return "", errors.New("no such ip")
+		return "", errors.New("no such ip " + containerid + " maybe it's a pause pod,you can check it .if not you clean it up")
 	}
 	return id, nil
+}
+
+func (e *Etcd) QueryContainerCores(podname string) (int, error) {
+	// try to query from idspath
+	info, err := e.GetAbsoluteKey(QueryCoresPath + podname)
+	if err != nil {
+		return 0, errors.New("no such pod info")
+	}
+	//log.Infoln(info)
+	c := gjson.Get(info, "spec.containers").Array()[0].Get("resources.limits.cpu").String()
+	cores, _ := strconv.Atoi(c)
+	return cores, nil
 }

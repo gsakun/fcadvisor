@@ -58,7 +58,7 @@ type DInfo struct {
 var info = &DInfo{}
 
 func GetDockerData(containerId string) (string, error) {
-	fi, err := os.Open("/var/lib/docker/containers/" + containerId + "/config.v2.json")
+	fi, err := os.Open("/var/lib/docker/containers/" + containerId + "/config.json")
 	if err != nil {
 		log.Errorln("get docker data failed")
 	}
@@ -66,91 +66,39 @@ func GetDockerData(containerId string) (string, error) {
 	fd, err := ioutil.ReadAll(fi)
 	// fmt.Println(string(fd))
 	return string(fd), nil
-} //zk
+}
+
+func GetDockerName(containerId string) (string, error) {
+	fi, err := os.Open("/var/lib/docker/containers/" + containerId + "/hostname")
+	if err != nil {
+		log.Errorln("get docker name failed")
+	}
+	defer fi.Close()
+	fd, err := ioutil.ReadAll(fi)
+	// fmt.Println(string(fd))
+	return strings.TrimSpace(string(fd)), nil
+}
+
+//zk
 func Getip() string {
 	var ip string
-	address, err := net.InterfaceByName(Config().AdapterName)
+	address, err := net.InterfaceByName("br0")
 	if err != nil {
 		//log.Infoln("failed to get br0 ip start query bond0 ip")
-		log.Errorln("failed to get adapter ip")
+		address1, err1 := net.InterfaceByName("bond0")
+		if err1 != nil {
+			log.Errorln("failed to get br0 bond0 ip")
+		}
+		ip_info1, _ := address1.Addrs()
+		ip1 := strings.Split(ip_info1[0].String(), "/")
+		ip = ip1[0]
+	} else {
+		ip_info, _ := address.Addrs()
+		ip2 := strings.Split(ip_info[0].String(), "/")
+		ip = ip2[0]
 	}
-	ip_info, _ := address.Addrs()
-	ip2 := strings.Split(ip_info[0].String(), "/")
-	ip = ip2[0]
-	log.Infoln("localendpoint " + " " + ip)
+	log.Infoln("local endpoint " + " " + ip)
 	return ip
-}
-
-func GetContainersJson() string {
-	addr := "/containers/json"
-	body, err := RequestUnixSocket2(addr, "GET")
-	if err != nil {
-		log.Errorln("Error request container stats", err)
-	}
-	//log.Infoln(string(body))
-	return string(body)
-}
-
-func GetContainerStats(containerId string) string {
-	addr := "/containers/" + containerId + "/stats?stream=0"
-	body, err := RequestUnixSocket2(addr, "GET")
-	if err != nil {
-		log.Errorln("Error request container stats", err)
-	}
-	//log.Infoln(string(body))
-	return string(body)
-}
-
-func RequestUnixSocket2(address, method string) ([]byte, error) {
-	DOCKER_UNIX_SOCKET := "unix:///var/run/docker.sock"
-	// Example: unix:///var/run/docker.sock:/images/json?since=1374067924
-	unix_socket_url := DOCKER_UNIX_SOCKET + ":" + address
-	u, err := url.Parse(unix_socket_url)
-	if err != nil || u.Scheme != "unix" {
-		log.Errorln("Error to parse unix socket url "+unix_socket_url, err)
-		return nil, err
-	}
-
-	hostPath := strings.Split(u.Path, ":")
-	u.Host = hostPath[0]
-	u.Path = hostPath[1]
-
-	conn, err := net.Dial("unix", u.Host)
-	if err != nil {
-		log.Errorln("Error to connect to"+u.Host, err)
-		// fmt.Println("Error to connect to", u.Host, err)
-		return nil, err
-	}
-
-	reader := strings.NewReader("")
-	query := ""
-	if len(u.RawQuery) > 0 {
-		query = "?" + u.RawQuery
-	}
-
-	request, err := http.NewRequest(method, u.Path+query, reader)
-	if err != nil {
-		log.Errorln("Error to create http request", err)
-		// fmt.Println("Error to create http request", err)
-		return nil, err
-	}
-
-	client := httputil.NewClientConn(conn, nil)
-	response, err := client.Do(request)
-	if err != nil {
-		log.Errorln("Error to achieve http request over unix socket", err)
-		// fmt.Println("Error to achieve http request over unix socket", err)
-		return nil, err
-	}
-
-	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		//log.Errorln("Error, get invalid body in answer", err)
-		// fmt.Println("Error, get invalid body in answer")
-		fmt.Println(err)
-	}
-	return body, err
 }
 
 //RequestUnixSocket 使用docker自身的api获取数据
@@ -168,7 +116,7 @@ func RequestUnixSocket(address, method string) (string, string, error) {
 	u.Host = hostPath[0]
 	u.Path = hostPath[1]
 
-	conn, err := net.DialTimeout("unix", u.Host, time.Second*30)
+	conn, err := net.DialTimeout("unix", u.Host, time.Second*5)
 	if err != nil {
 		log.Errorln(err, "getDatas.go  Error to connect to"+u.Host)
 		// fmt.Println("Error to connect to", u.Host, err)
@@ -202,7 +150,7 @@ func RequestUnixSocket(address, method string) (string, string, error) {
 		// fmt.Println("Error, get invalid body in answer")
 		return "", "", err
 	}
-	log.Infoln(body)
+
 	defer response.Body.Close()
 	if err := json.Unmarshal(body, info); err != nil {
 		log.Errorf("Error decode info %s", err)

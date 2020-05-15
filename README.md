@@ -1,43 +1,43 @@
-# fcadvisor
-<<<<<<< HEAD
+Docker container monitor plugin for Open-Falcon  Micadvisor-Open
+--------------
+描述
+--------
+本项目是基于小米开发的micadvisor_open项目，对上报数据引擎进行了修改，使其更容易维护和扩展，并且减少了依赖包.
 
-#### 项目介绍
-{**以下是码云平台说明，您可以替换为您的项目简介**
-码云是开源中国推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用码云实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+build和启动方法：
+-----------------
+```bash
+chmod +x cadvisor
+chmod +x build.sh
+./build.sh
+```
+注：
 
-#### 软件架构
-软件架构说明
+```
+1  容器的启动参数在build文件中，参数含义都无变化
+2  修正了之前取值错误的问题
+3  修正了数据断线的问题
+4  pushDatas.go 为主上报程序，都有中文注释，有些上报指标被隐藏了，去掉注释即可使用。
+5  增加了更多异常log,方便问题排查
+```
 
-
-#### 安装教程
-
-1. xxxx
-2. xxxx
-3. xxxx
-
-#### 使用说明
-
-1. xxxx
-2. xxxx
-3. xxxx
-
-#### 参与贡献
-
-1. Fork 本项目
-2. 新建 Feat_xxx 分支
-3. 提交代码
-4. 新建 Pull Request
-
-
-#### 码云特技
-
-1. 使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2. 码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3. 你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4. [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5. 码云官方提供的使用手册 [http://git.mydoc.io/](http://git.mydoc.io/)
-6. 码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
-=======
-A tool for monitoring docker containers
->>>>>>> 124c8847eed4c3e7d1dea3c182cc2c5084ebcfff
+编译和运行环境
+-------------------------
+采集的指标
+--------------------------
+| Counters | Notes|
+|-----|------|
+|cpu.loadaverage|cpu的平均负载|
+|cpu.usageTotalSec|cpu的整体负载,单位秒|
+|disk.io.read_MBps|硬盘读取速度，单位MBps|
+|disk.io.write_MBps|硬盘写入速度，单位MBps|
+|mem.memtotal|内存总量，即容器的内存limit值|
+|mem.memused|内存使用量|
+|mem.totalUsed.percent|整体内存使用占比|
+|mem.Rss.percent| RSS在内存总量中的占比|
+|mem.cache.percent| Cache在内存总量中的占比|
+|mem.WorkingSet.percent| WorkingSet在内存总量中的占比|
+|net.rx.KBps|网卡接收数据包速度,单位KBps|
+|net.rxDrop.packets|网卡收包丢包量,单位包|
+|net.tx.KBps|网卡发送数据包速度,单位KBps|
+|net.txDrop.packets|网卡发包丢包量,单位包|
