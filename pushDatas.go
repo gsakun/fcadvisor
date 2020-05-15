@@ -3,13 +3,9 @@ package main
 import (
 	"bufio"
 	"bytes"
+
 	//"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	c "github.com/fcadvisor/cpuacct"
-	"github.com/fcadvisor/etcdclient"
-	g "github.com/fcadvisor/getdata"
-	"github.com/tidwall/gjson"
 	"io"
 	"io/ioutil"
 	"os"
@@ -18,6 +14,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	c "github.com/gsakun/fcadvisor/cpuacct"
+	"github.com/gsakun/fcadvisor/etcdclient"
+	g "github.com/gsakun/fcadvisor/getdata"
+	log "github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 type Info struct {
@@ -51,7 +53,28 @@ var Containerinfo = &SafeContainerinfo{M: make(map[string]*Info)}
 var localhost string
 
 func main() {
-	go cpuinit()
+	if len(os.Args) == 1 || len(os.Args) != 2 {
+		log.Infoln("Usage: ./fcadvisor run|k8s")
+		os.Exit(1)
+	}
+	if os.Args[1] == "help" {
+		log.Infoln("Usage: ./fcadvisor run|k8s")
+		os.Exit(1)
+	}
+	if os.Args[1] == "version" {
+		log.Infoln("Version: v.1.5")
+		os.Exit(1)
+	}
+	montype := os.Args[1]
+	if montype != "k8s" || montype != "run" {
+		log.Infoln("Usage: ./fcadvisor local|k8s")
+	}
+	if montype == "k8s" {
+		go cpuinit()
+	}
+	if montype == "run" {
+		go localpodinit()
+	}
 	time.Sleep(1 * time.Second)
 	//go dockerinfo()
 	for {
@@ -79,6 +102,39 @@ func dockerinfo() {
 
 		}
 		time.Sleep(3600 * time.Second)
+	}
+}
+
+func localpodinit() {
+	log.Infoln("Start LocalPodInit")
+	fi, err := os.Open("/root/.containerinfo")
+	if err != nil {
+		log.Fatalf("Error: %s\n", err)
+		return
+	}
+	defer fi.Close()
+
+	br := bufio.NewReader(fi)
+	for {
+		a, _, end := br.ReadLine()
+		if end == io.EOF {
+			break
+		}
+		info := strings.Split(string(a), " ")
+		core, err := strconv.Atoi(info[2])
+		if err != nil {
+			log.Fatalf("Parse %s pod core num failed", info[0])
+		}
+		path := fmt.Sprintf("/cgroup/cpuacct/docker/%s/", info[0])
+		usage, system, cpunum, _ := c.GetStats(path)
+		s := &Info{
+			info[1],
+			cpunum,
+			usage,
+			system,
+			core,
+		}
+		Containerinfo.Put(info[0], s)
 	}
 }
 

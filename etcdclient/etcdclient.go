@@ -2,7 +2,7 @@ package etcdclient
 
 import (
 	"errors"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/coreos/etcd/client"
 	"github.com/tidwall/gjson"
 	"golang.org/x/net/context"

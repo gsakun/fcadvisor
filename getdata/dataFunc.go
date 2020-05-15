@@ -6,7 +6,7 @@ import (
 	"net/http"
 	//"fmt"
 	//"bufio"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	//"io"
 	//"os"
 	"strings"
