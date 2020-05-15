@@ -2,15 +2,8 @@ Docker container monitor plugin for Open-Falcon  Micadvisor-Open
 --------------
 描述
 --------
-本项目是基于小米开发的micadvisor_open项目，对上报数据引擎进行了修改，使其更容易维护和扩展，并且减少了依赖包.
+本项目读取物理机对应容器数据整合并上报.
 
-build和启动方法：
------------------
-```bash
-chmod +x cadvisor
-chmod +x build.sh
-./build.sh
-```
 注：
 
 ```
